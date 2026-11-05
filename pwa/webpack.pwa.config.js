@@ -24,11 +24,11 @@ for (const { name, file, search, replace } of patches) {
 }
 
 webConfig.output.copy.push(
-  { from: path.join(__dirname, 'manifest.webmanifest'), to: 'manifest.webmanifest' },
-  { from: path.join(__dirname, 'register-sw.js'), to: 'register-sw.js' },
-  { from: path.join(__dirname, 'pwa-config.js'), to: 'pwa-config.js' },
-  { from: path.join(rootDir, '_icons/iconColor.png'), to: 'icons/icon-512.png' },
-  { from: path.join(rootDir, '_icons/icon.svg'), to: 'icons/icon.svg' },
+  { from: path.join(__dirname, 'manifest.webmanifest'), filename: 'manifest.webmanifest' },
+  { from: path.join(__dirname, 'register-sw.js'), filename: 'register-sw.js' },
+  { from: path.join(__dirname, 'pwa-config.js'), filename: 'pwa-config.js' },
+  { from: path.join(rootDir, '_icons/iconColor.png'), filename: 'icons/icon-512.png' },
+  { from: path.join(rootDir, '_icons/icon.svg'), filename: 'icons/icon.svg' },
 )
 
 webConfig.plugins.push(
