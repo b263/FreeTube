@@ -5,7 +5,6 @@
 //   pnpm exec webpack --mode=production --config-node-env=production --config pwa/webpack.pwa.config.js
 
 const path = require('path')
-const CopyWebpackPlugin = require('copy-webpack-plugin')
 
 const webConfig = require('../_scripts/webpack.web.config.js')
 const FreeTubePwaPlugin = require('./FreeTubePwaPlugin.js')
@@ -24,16 +23,15 @@ for (const { name, file, search, replace } of patches) {
   })
 }
 
+webConfig.output.copy.push(
+  { from: path.join(__dirname, 'manifest.webmanifest'), to: 'manifest.webmanifest' },
+  { from: path.join(__dirname, 'register-sw.js'), to: 'register-sw.js' },
+  { from: path.join(__dirname, 'pwa-config.js'), to: 'pwa-config.js' },
+  { from: path.join(rootDir, '_icons/iconColor.png'), to: 'icons/icon-512.png' },
+  { from: path.join(rootDir, '_icons/icon.svg'), to: 'icons/icon.svg' },
+)
+
 webConfig.plugins.push(
-  new CopyWebpackPlugin({
-    patterns: [
-      { from: path.join(__dirname, 'manifest.webmanifest'), to: 'manifest.webmanifest' },
-      { from: path.join(__dirname, 'register-sw.js'), to: 'register-sw.js' },
-      { from: path.join(__dirname, 'pwa-config.js'), to: 'pwa-config.js' },
-      { from: path.join(rootDir, '_icons/iconColor.png'), to: 'icons/icon-512.png' },
-      { from: path.join(rootDir, '_icons/icon.svg'), to: 'icons/icon.svg' },
-    ]
-  }),
   new FreeTubePwaPlugin({
     serviceWorkerTemplate: path.join(__dirname, 'sw.js'),
   })
