@@ -6,7 +6,7 @@
 
 FreeTube is an open source desktop YouTube player built with privacy in mind.
 Use YouTube without advertisements and prevent Google from tracking you with their cookies and JavaScript.
-Available for Windows (10 and later), Mac (macOS 12 and later) & Linux thanks to Electron.
+Available for Windows (10 and later), Mac (macOS 13 and later) & Linux thanks to Electron.
 
 <p align="center"><a href="https://github.com/FreeTubeApp/FreeTube/releases">Download FreeTube</a></p>
 <p align="center">
@@ -104,7 +104,7 @@ RedirectTube, doesn’t automatically open YouTube links in FreeTube (although t
 ### Official Downloads
 
 > [!CAUTION]
-> FreeTube is only supported on Windows 10 and later, macOS 12 and above, and various Linux distributions. Installing it on unsupported systems may result in unexpected issues.
+> FreeTube is only supported on Windows 10 and later, macOS 13 and above, and various Linux distributions. Installing it on unsupported systems may result in unexpected issues.
 
 - [GitHub Releases](https://github.com/FreeTubeApp/FreeTube/releases)
 
@@ -125,13 +125,12 @@ The first build with a green check mark is the latest build.
 > You will need to have a GitHub account to download these builds.
 
 ### Projects maintained by individual FreeTube team members
+* Homebrew FreeTube (Apple Silicon only): [Install](https://github.com/PikachuEXE/homebrew-FreeTube)
+
+* FreeTubeAndroid (FreeTube port for Android and PWA): [Download](https://github.com/MarmadileManteater/FreeTubeAndroid/releases) and [Source Code](https://github.com/MarmadileManteater/FreeTubeAndroid)
 
 > [!IMPORTANT]
-> The following are related projects maintained by individual members of the FreeTube team. While they are not part of the main FreeTube project, they may be useful to FreeTube users. There may be issues when using these projects compared to the official builds. Any issues specific to these builds should be reported to their respective maintainers. Make sure you always try an [official download](https://github.com/freetubeapp/freetube/#official-downloads) before reporting your issue to us!
-
-- Homebrew FreeTube (Apple Silicon only): [Install](https://github.com/PikachuEXE/homebrew-FreeTube)
-
-- FreeTubeAndroid (FreeTube port for Android and PWA): [Download](https://github.com/MarmadileManteater/FreeTubeAndroid/releases) and [Source Code](https://github.com/MarmadileManteater/FreeTubeAndroid)
+> These projects are related to FreeTube and are maintained by individual members of the FreeTube team. While they are not part of the main FreeTube project, they may be useful to FreeTube users. There may be issues when using these projects compared to the official builds. Any issues specific to these builds should be reported to their respective maintainers. Make sure you always try an [official download](https://github.com/freetubeapp/freetube/#official-downloads) before reporting your issue to us!
 
 ## Contributing
 
@@ -154,8 +153,7 @@ We are actively looking for translations! We use [Weblate](https://hosted.weblat
 For the Linux Flatpak, the desktop entry comment string can be translated at our [Flatpak repository](https://github.com/flathub/io.freetubeapp.FreeTube/blob/master/io.freetubeapp.FreeTube.desktop).
 
 ## Contact
-
-If you ever have any questions, feel free to ask it on our [Discussions](https://github.com/FreeTubeApp/FreeTube/discussions) page. Alternatively, you can join our [Matrix Room](https://matrix.to/#/#freetube:matrix.org).
+If you ever have any questions, feel free to ask it on our [Discussions](https://github.com/FreeTubeApp/FreeTube/discussions) page.  Alternatively, you can join our [Matrix Space](https://matrix.to/#/#freetubeapp:matrix.org).  
 
 > [!IMPORTANT]
 > Don't forget to check out the [rules](https://docs.freetubeapp.io/community/matrix/) before joining.

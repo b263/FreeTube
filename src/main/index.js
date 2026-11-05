@@ -2,7 +2,7 @@ import {
   app, BrowserWindow, dialog, Menu, ipcMain,
   powerSaveBlocker, screen, session, shell,
   nativeTheme, net, protocol, clipboard,
-  Tray
+  Tray, ClipboardItem,
 } from 'electron'
 import path from 'path'
 import cp from 'child_process'
@@ -138,12 +138,17 @@ function runApp() {
         }
       }
 
-      const copy = (url) => {
+      const copy = async (url) => {
         if (parameters.linkText) {
-          clipboard.write({
-            bookmark: parameters.linkText,
-            text: url
-          })
+          await clipboard.write([
+            new ClipboardItem({
+              'text/plain': url,
+              'electron application/bookmark': {
+                title: parameters.linkText,
+                url,
+              },
+            })
+          ])
         } else {
           clipboard.writeText(url)
         }
@@ -223,22 +228,22 @@ function runApp() {
         {
           label: 'Copy Lin&k',
           visible: visible && !isInAppUrl,
-          click: () => {
-            copy(parameters.linkURL)
+          click: async () => {
+            await copy(parameters.linkURL)
           }
         },
         {
           label: 'Copy YouTube Link',
           visible: visible && isInAppUrl,
-          click: () => {
-            copy(transformURL(true))
+          click: async () => {
+            await copy(transformURL(true))
           }
         },
         {
           label: 'Copy Invidious Link',
           visible: visible && isInAppUrl && (backendPreference === 'invidious' || backendFallback),
-          click: () => {
-            copy(transformURL(false))
+          click: async () => {
+            await copy(transformURL(false))
           }
         },
         // Only show search in new window for
@@ -306,6 +311,12 @@ function runApp() {
     // we've got a custom image cache to make up for disabling the http cache
     // experimental as it increases RAM use in favour of reduced disk use
     app.commandLine.appendSwitch('disable-http-cache')
+  }
+
+  const DISABLE_HARDWARE_ACCELERATION_PATH = `${userDataPath}/experiment-disable-hardware-acceleration`
+  const disableHardwareAcceleration = existsSync(DISABLE_HARDWARE_ACCELERATION_PATH)
+  if (disableHardwareAcceleration) {
+    app.commandLine.appendSwitch('disable-gpu')
   }
 
   const PLAYER_CACHE_PATH = `${userDataPath}/player_cache`
@@ -602,9 +613,14 @@ function runApp() {
         requestHeaders['Sec-Fetch-Mode'] = 'navigate'
         requestHeaders['Sec-Fetch-Site'] = 'none'
         requestHeaders['Sec-Fetch-User'] = '?1'
-        requestHeaders.Cookie = requestHeaders.Cookie
-          ? requestHeaders.Cookie + `;PREF=tz=${Intl.DateTimeFormat().resolvedOptions().timeZone.replace('/', '.')}`
-          : ''
+
+        if (requestHeaders['X-Cookie']) {
+          requestHeaders.Cookie = requestHeaders.Cookie
+            ? requestHeaders.Cookie + ';' + requestHeaders['X-Cookie']
+            : requestHeaders['X-Cookie']
+
+          delete requestHeaders['X-Cookie']
+        }
       } else if (url === 'https://www.youtube.com/sw.js_data' || url.startsWith('https://www.youtube.com/api/timedtext')) {
         requestHeaders.Referer = 'https://www.youtube.com/sw.js'
         requestHeaders['Sec-Fetch-Site'] = 'same-origin'
@@ -642,7 +658,8 @@ function runApp() {
       urls: [
         'https://www.youtube.com/sw.js_data',
         'https://www.youtube.com/iframe_api',
-        'https://www.youtube.com/watch?*'
+        'https://www.youtube.com/watch?*',
+        'https://www.youtube.com/',
       ]
     }
 
@@ -698,11 +715,11 @@ function runApp() {
 
           // Electron doesn't allow certain headers to be set:
           // https://www.electronjs.org/docs/latest/api/client-request#requestsetheadername-value
-          // also blacklist Origin and Referrer as we don't want to let YouTube know about them
-          const blacklistedHeaders = ['content-length', 'host', 'trailer', 'te', 'upgrade', 'cookie2', 'keep-alive', 'transfer-encoding', 'origin', 'referrer']
+          // also denylist Origin and Referrer as we don't want to let YouTube know about them
+          const denylistedHeaders = ['content-length', 'host', 'trailer', 'te', 'upgrade', 'cookie2', 'keep-alive', 'transfer-encoding', 'origin', 'referrer']
 
           for (const header of Object.keys(request.headers)) {
-            if (!blacklistedHeaders.includes(header.toLowerCase())) {
+            if (!denylistedHeaders.includes(header.toLowerCase())) {
               newRequest.setHeader(header, request.headers[header])
             }
           }
@@ -1100,16 +1117,7 @@ function runApp() {
 
       newWindow.on('minimize', () => {
         if (trayOnMinimize) {
-          // Workaround for https://github.com/electron/electron/issues/49253
-          if (process.platform === 'linux') {
-            setTimeout(() => {
-              newWindow.restore()
-              newWindow.hide()
-            }, 100)
-          } else {
-            newWindow.hide()
-          }
-
+          newWindow.hide()
           manageTray(newWindow)
 
           if (newWindow === mainWindow) {
@@ -1597,6 +1605,28 @@ function runApp() {
     relaunch()
   })
 
+  ipcMain.handle(IpcChannels.GET_DISABLE_HARDWARE_ACCELERATION, (event) => {
+    if (isFreeTubeUrl(event.senderFrame.url)) {
+      return disableHardwareAcceleration
+    }
+  })
+
+  ipcMain.once(IpcChannels.TOGGLE_DISABLE_HARDWARE_ACCELERATION, async (event) => {
+    if (!isFreeTubeUrl(event.senderFrame.url)) {
+      return
+    }
+
+    if (disableHardwareAcceleration) {
+      await asyncFs.rm(DISABLE_HARDWARE_ACCELERATION_PATH)
+    } else {
+      // create an empty file
+      const handle = await asyncFs.open(DISABLE_HARDWARE_ACCELERATION_PATH, 'w')
+      await handle.close()
+    }
+
+    relaunch()
+  })
+
   function playerCachePathForKey(key) {
     // Remove path separators and period characters,
     // to prevent any files outside of the player_cache directory,
@@ -1776,6 +1806,24 @@ function runApp() {
             IpcChannels.SYNC_HISTORY,
             event,
             { event: SyncEvents.HISTORY.UPDATE_PLAYLIST, data }
+          )
+          return null
+
+        case DBActions.HISTORY.UNSET_PLAYLIST_FOR_VIDEOS:
+          await baseHandlers.history.unsetLastViewedPlaylistForVideos(data.videoIds, data.lastViewedPlaylistId)
+          syncOtherWindows(
+            IpcChannels.SYNC_HISTORY,
+            event,
+            { event: SyncEvents.HISTORY.UNSET_PLAYLIST_FOR_VIDEOS, data }
+          )
+          return null
+
+        case DBActions.HISTORY.UNSET_PLAYLISTS:
+          await baseHandlers.history.unsetLastViewedPlaylists(data)
+          syncOtherWindows(
+            IpcChannels.SYNC_HISTORY,
+            event,
+            { event: SyncEvents.HISTORY.UNSET_PLAYLISTS, data }
           )
           return null
 

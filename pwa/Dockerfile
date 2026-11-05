@@ -14,7 +14,7 @@ FROM --platform=$BUILDPLATFORM node:24-slim AS build
 ENV CI=true \
     ELECTRON_SKIP_BINARY_DOWNLOAD=1
 
-RUN npm install --global pnpm@10
+RUN npm install --global pnpm@11
 
 WORKDIR /app
 
